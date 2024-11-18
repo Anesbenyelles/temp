@@ -1,74 +1,58 @@
-import { FileText, Upload } from 'lucide-react';
-import React, { useState } from 'react';
-import { Bar, BarChart, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { PieChart, Pie, Cell } from 'recharts';
-import ColumnOrder from './components/ColumnOrder';
+import { ChevronDown, FileText, Upload } from 'lucide-react'
+import React, { useState } from 'react'
+import { Bar, BarChart, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 export default function Component() {
-
-  const [file, setFile] = useState(null);
-  const [columns, setColumns] = useState({});
-  const [columnTypes, setColumnTypes] = useState({});
-  const [results, setResults] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [orderedLists, setOrderedLists] = useState({});
+  const [file, setFile] = useState(null)
+  const [columns, setColumns] = useState([])
+  const [columnTypes, setColumnTypes] = useState({})
+  const [results, setResults] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
 
   const handleFileChange = (event) => {
-    setFile(event.target.files[0]);
-  };
-
- const handleColumnTypeChange = (col, value) => {
-  setColumnTypes((prev) => ({
-    ...prev,
-    [col]: value,
-  }));
-
-  // Clear the order if type changes to something else
-  if (value !== "1") {
-    setOrderedLists((prev) => {
-      const updated = { ...prev };
-      delete updated[col];
-      return updated;
-    });
+    setFile(event.target.files[0])
   }
-};
 
-  
+  const handleColumnTypeChange = (column, value) => {
+    setColumnTypes({
+      ...columnTypes,
+      [column]: value,
+    })
+  }
 
   const handleSubmit = async () => {
     if (!file) {
-      alert('Veuillez sélectionner un fichier.');
-      return;
+      alert('Veuillez sélectionner un fichier.')
+      return
     }
 
-    const formData = new FormData();
-    formData.append('file', file);
+    const formData = new FormData()
+    formData.append('file', file)
 
-    setLoading(true);
-    setError(null);
+    setLoading(true)
+    setError(null)
 
     try {
       const response = await fetch('http://127.0.0.1:5000/upload', {
         method: 'POST',
         body: formData,
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
       if (data.error) {
-        setError(data.error);
-        setLoading(false);
-        return;
+        setError(data.error)
+        setLoading(false)
+        return
       }
 
-      setColumns(data.columns);
-      await processColumns(data.file_path);
+      setColumns(data.columns)
+      await processColumns(data.file_path)
     } catch (err) {
-      setError("Erreur lors de l'upload du fichier");
-      setLoading(false);
+      setError('Erreur lors de l\'upload du fichier')
+      setLoading(false)
     }
-  };
-
+  }
 
   const processColumns = async (filePath) => {
     try {
@@ -268,34 +252,22 @@ export default function Component() {
             {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
 
             {Object.entries(columns).map(([col, values], index) => (
-        <div key={index} className="relative border p-4 rounded">
-          <label className="block font-semibold">{col}</label>
-          <select
+    <div key={index} className="relative">
+        <select
             onChange={(e) => handleColumnTypeChange(col, e.target.value)}
-            value={columnTypes[col] || ""}
-            className="block w-full mt-2 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-          >
-            <option value="">Select Type</option>
+            value={columnTypes[col] || ''}
+            className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:ring-indigo-500"
+        >
+            <option value="">Type pour {col}</option>
+            <option value="0">Nominal</option>
             <option value="1">Ordinal</option>
-            <option value="2">Nominal</option>
-          </select>
-
-          <div className="text-gray-600 mt-3">
-            {columnTypes[col] === "1" ? (
-              <ColumnOrder
-                variables={values}
-                currentRep={col}
-                onSubmitData={(rep, order) => {
-                  const updatedOrderedLists = { ...orderedLists, [rep]: order };
-                  setOrderedLists(updatedOrderedLists);
-                }}
-              />
-            ) : (
-              <p>{values.join(", ")}</p>
-            )}
-          </div>
+        </select>
+        <div className="text-gray-600 mt-1">
+            {values.join(", ")}
         </div>
-      ))}
+    </div>
+))}
+
             {results && (
               <div className="mt-8">
                 <h2 className="text-xl font-semibold mb-4">Résultats</h2>
